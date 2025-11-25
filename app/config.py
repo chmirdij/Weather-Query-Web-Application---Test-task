@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     OW_API_KEY: str | None = None
     OW_URL: str | None = None
 
+    REDIS_HOST: str | None = None
+    REDIS_PORT: int | None = None
+
     @computed_field
     @property
     def database_url(self) -> str:

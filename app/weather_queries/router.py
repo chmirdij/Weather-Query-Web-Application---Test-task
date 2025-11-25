@@ -9,6 +9,5 @@ router = APIRouter(
 
 @router.get("")
 async def get_weather_by_city(city: str = Query(...), unit: str = Query("metric")):
-    row, parsed = WeatherService.fetch_weather_data(city, unit)
-    await WeatherService.add_weather_data(row, parsed, unit)
-    return parsed
+    parsed, served_from_cache = await WeatherService.get_weather_data_with_cache(city, unit)
+    return {**dict(parsed), "served_from_cache": served_from_cache}
