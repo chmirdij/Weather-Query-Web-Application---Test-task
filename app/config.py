@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     DB_PASS: str | None = None
     DB_NAME: str | None = None
 
+    OW_API_KEY: str | None = None
+    OW_URL: str | None = None
+
     @computed_field
     @property
     def database_url(self) -> str:
