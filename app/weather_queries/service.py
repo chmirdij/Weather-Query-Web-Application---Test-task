@@ -13,7 +13,7 @@ class WeatherService:
     _model = WeatherQueries
 
     @classmethod
-    def fetch_weather_data(cls, city: str, units: str = "metric"):
+    async def fetch_weather_data(cls, city: str, units: str = "metric"):
         params = {
             "q": city,
             "units": units,
@@ -32,18 +32,18 @@ class WeatherService:
     async def get_weather_data_with_cache(cls, city: str, unit: str = "metric"):
         redis_key = f"weather_cache:{city.lower()}:{unit}"
 
-        cached_data = redis_client.get(redis_key)
+        cached_data = await redis_client.get(redis_key)
         if cached_data:
             data = json.loads(cached_data)
             served_from_cache = True
         else:
-            row, parsed = cls.fetch_weather_data(city, unit)
+            row, parsed = await cls.fetch_weather_data(city, unit)
             served_from_cache = False
 
             data = dict(parsed)
             data["row"] = row
 
-            redis_client.setex(redis_key, 300, json.dumps(data))
+            await redis_client.setex(redis_key, 300, json.dumps(data))
 
         row = data["row"]
         parsed = WeatherApiResponse.parse_api_response(row)
