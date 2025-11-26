@@ -6,8 +6,8 @@ class RateLimiterMiddleware:
     def __init__(self, app, redis_client):
         self.app = app
         self.redis_client = redis_client
-        self.rate_limit = 3
-        self.window = 10
+        self.rate_limit = 30
+        self.window = 60
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":

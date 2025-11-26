@@ -1,6 +1,7 @@
 import requests
 import json
-from sqlalchemy import insert
+from sqlalchemy import insert, select, func, and_
+from datetime import datetime
 
 from app.config import settings
 from app.database import async_session_maker
@@ -68,6 +69,107 @@ class WeatherService:
             query = insert(cls._model).values(params)
             await session.execute(query)
             await session.commit()
+
+
+    @classmethod
+    async def get_all_queries(
+            cls,
+            page: int,
+            limit: int,
+            city: str | None = None,
+            date_from: datetime | None = None,
+            date_to: datetime | None = None,
+    ):
+        async with async_session_maker() as session:
+            filters = []
+            if city:
+                filters.append(cls._model.city.ilike(f"%{city}%"))
+            if date_from:
+                filters.append(cls._model.timestamp >= date_from)
+            if date_to:
+                filters.append(cls._model.timestamp <= date_to)
+
+            total_filter = and_(*filters) if filters else None
+
+            query = (
+                select(
+                    cls._model.id,
+                    cls._model.city,
+                    cls._model.unit,
+                    cls._model.temperature,
+                    cls._model.description,
+                    cls._model.timestamp,
+                    cls._model.served_from_cache,
+                    func.count().over().label("total")
+                )
+                .offset((page - 1) * limit)
+                .limit(limit)
+            )
+
+            if total_filter is not None:
+                query = query.where(total_filter)
+
+            result = await session.execute(query)
+            data = result.mappings().all()
+
+            if not data:
+                return {
+                    "total": 0,
+                    "page": page,
+                    "limit": limit,
+                    "items": []
+                }
+
+            total = data[0]["total"]
+
+            data = [dict(el) for el in data]
+            for item in data:
+                item.pop("total")
+
+            return {
+                "total": total,
+                "page": page,
+                "limit": limit,
+                "items": data
+            }
+
+    @classmethod
+    async def get_queries_for_export(
+            cls,
+            city: str | None = None,
+            date_from: datetime | None = None,
+            date_to: datetime | None = None,
+    ):
+        async with async_session_maker() as session:
+            filters = []
+            if city:
+                filters.append(cls._model.city.ilike(f"%{city}%"))
+            if date_from:
+                filters.append(cls._model.timestamp >= date_from)
+            if date_to:
+                filters.append(cls._model.timestamp <= date_to)
+
+            total_filter = and_(*filters) if filters else None
+
+            query = (
+                select(
+                    cls._model.id,
+                    cls._model.city,
+                    cls._model.unit,
+                    cls._model.temperature,
+                    cls._model.description,
+                    cls._model.timestamp,
+                    cls._model.served_from_cache,
+                    func.count().over().label("total")
+                )
+            )
+
+            if total_filter is not None:
+                query = query.where(total_filter)
+
+            result = await session.execute(query)
+            return result.mappings().all()
+
 
 # r, p = WeatherService.fetch_weather_data(city="London", units="metric")
 # dp = dict(p)
