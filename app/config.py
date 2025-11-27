@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     REDIS_PORT: int | None = None
 
     MODE: Literal["DEV","TEST", "PROD"] = "DEV"
+    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
 
     @computed_field
     @property

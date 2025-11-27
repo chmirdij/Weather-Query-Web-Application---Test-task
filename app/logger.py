@@ -1,10 +1,10 @@
 import logging
 from pythonjsonlogger.json import JsonFormatter
 
-
+from app.config import settings
 
 logger = logging.getLogger("app")
-logger.setLevel(logging.INFO)
+logger.setLevel(settings.LOG_LEVEL)
 
 handler = logging.StreamHandler()
 

@@ -1,3 +1,4 @@
+import asyncio
 import requests
 import json
 import time
@@ -76,7 +77,6 @@ class WeatherService:
         return parsed, served_from_cache
 
 
-
     @classmethod
     async def add_weather_data(cls, row_data, parsed_data, unit: str = "metric", served_from_cache=False):
         async with async_session_maker() as session:
@@ -97,8 +97,8 @@ class WeatherService:
     @classmethod
     async def get_all_queries(
             cls,
-            page: int,
-            limit: int,
+            page: int = 1,
+            limit: int = 10,
             city: str | None = None,
             date_from: datetime | None = None,
             date_to: datetime | None = None,
@@ -192,6 +192,15 @@ class WeatherService:
 
             result = await session.execute(query)
             return result.mappings().all()
+
+    @classmethod
+    async def get_queries_amount(cls):
+        async with async_session_maker() as session:
+            query = select(func.count()).select_from(cls._model)
+            result = await session.execute(query)
+            count = result.scalar_one()
+
+            return count
 
 
 # r, p = WeatherService.fetch_weather_data(city="London", units="metric")
