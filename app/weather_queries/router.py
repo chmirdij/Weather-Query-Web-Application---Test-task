@@ -5,6 +5,7 @@ import csv
 from fastapi import APIRouter, Query
 from fastapi.responses import StreamingResponse
 
+from app.utils.csv_handler import iter_csv
 from app.weather_queries.service import WeatherService
 
 router = APIRouter(
@@ -41,21 +42,8 @@ city: str | None = Query(None),
 ):
     data = await WeatherService.get_queries_for_export(city, date_from, date_to)
 
-    def iter_csv():
-        writer = csv.writer
-        yield ",".join(["city", "unit", "temperature", "description", "timestamp", "served_from_cache"]) + "\n"
-        for row in data:
-            yield ",".join([
-                str(row["city"]),
-                str(row["unit"]),
-                str(row["temperature"]),
-                str(row["description"]),
-                row["timestamp"].isoformat(),
-                str(row["served_from_cache"])
-            ]) + "\n"
-
     return StreamingResponse(
-        iter_csv(),
+        iter_csv(data),
         media_type="text/csv",
         headers={"Content-Disposition": 'attachment; filename="queries.csv"'}
     )

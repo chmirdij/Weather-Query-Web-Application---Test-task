@@ -1,8 +1,9 @@
-from app.config import settings
 from app.database import async_session_maker
 
 from sqlalchemy import text
-import requests
+
+from app.logger import logger
+from app.weather_queries.service import WeatherService
 
 
 class HealthService:
@@ -15,6 +16,7 @@ class HealthService:
             return {"status": "ok"}
 
         except Exception as e:
+            logger.error("DB connection error", extra={"details": str(e)})
             return {
                 "status": "error",
                 "message": str(e),
@@ -23,12 +25,7 @@ class HealthService:
     @staticmethod
     async def check_api_connection():
         try:
-            params = {
-                "q": "minsk",
-                "appid": settings.OW_API_KEY,
-            }
-            response = requests.get(settings.OW_URL, params=params,timeout=3)
-            response.raise_for_status()
+            await WeatherService.fetch_weather_data("minsk")
 
             return {"status": "ok"}
 

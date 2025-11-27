@@ -1,5 +1,8 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from redis.exceptions import RedisError
+
+from app.logger import logger
 
 
 class RateLimiterMiddleware:
@@ -10,26 +13,30 @@ class RateLimiterMiddleware:
         self.window = 60
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
-            await self.app(scope, receive, send)
-            return
+        try:
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
 
-        request = Request(scope, receive)
-        ip = request.client.host
+            request = Request(scope, receive)
+            ip = request.client.host
 
-        redis_key = f"rate_limit:{ip}"
+            redis_key = f"rate_limit:{ip}"
 
-        count = await self.redis_client.incr(redis_key)
+            count = await self.redis_client.incr(redis_key)
 
-        if count == 1:
-            await self.redis_client.expire(redis_key, self.window)
+            if count == 1:
+                await self.redis_client.expire(redis_key, self.window)
 
-        if count > self.rate_limit:
-            response = JSONResponse(
-                status_code=429,
-                content={"detail": "Too many requests, please try again later."},
-            )
-            await response(scope, receive, send)
-            return
+            if count > self.rate_limit:
+                response = JSONResponse(
+                    status_code=429,
+                    content={"detail": "Too many requests, please try again later."},
+                )
+                await response(scope, receive, send)
+                return
+
+        except RedisError as e:
+            logger.error("Redis connection error", extra={"details": str(e)})
 
         await self.app(scope, receive, send)
