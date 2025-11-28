@@ -104,15 +104,8 @@ class WeatherService:
             date_to: datetime | None = None,
     ):
         async with async_session_maker() as session:
-            filters = []
-            if city:
-                filters.append(cls._model.city.ilike(f"%{city}%"))
-            if date_from:
-                filters.append(cls._model.timestamp >= date_from)
-            if date_to:
-                filters.append(cls._model.timestamp <= date_to)
 
-            total_filter = and_(*filters) if filters else None
+            total_filter = cls.get_filters(city, date_from, date_to)
 
             query = (
                 select(
@@ -157,6 +150,18 @@ class WeatherService:
             }
 
     @classmethod
+    def get_filters(cls, city, date_from, date_to):
+        filters = []
+        if city:
+            filters.append(cls._model.city.ilike(f"%{city}%"))
+        if date_from:
+            filters.append(cls._model.timestamp >= date_from)
+        if date_to:
+            filters.append(cls._model.timestamp <= date_to)
+
+        return and_(*filters) if filters else None
+
+    @classmethod
     async def get_queries_for_export(
             cls,
             city: str | None = None,
@@ -164,15 +169,8 @@ class WeatherService:
             date_to: datetime | None = None,
     ):
         async with async_session_maker() as session:
-            filters = []
-            if city:
-                filters.append(cls._model.city.ilike(f"%{city}%"))
-            if date_from:
-                filters.append(cls._model.timestamp >= date_from)
-            if date_to:
-                filters.append(cls._model.timestamp <= date_to)
 
-            total_filter = and_(*filters) if filters else None
+            total_filter = cls.get_filters(city, date_from, date_to)
 
             query = (
                 select(
