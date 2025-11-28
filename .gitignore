@@ -1,5 +1,4 @@
-.env.sample
-.env.*
+.env
 .venv/
 .idea/
 migrations/__pycache__/
