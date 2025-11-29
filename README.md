@@ -19,7 +19,7 @@ and store/display the query history. The application uses PostgreSQL to store us
 ## Quickstart with Docker Compose
 1. Clone the repository
 2. Copy environment variables from the sample, fill your OW_API_KEY in **.env** and **.env.docker**
-3. Build and start all services (app, database, Redis):
+3. Build and start all services (app, db, test_db, Redis):
 ```bash
 docker compose build
 docker compose up -d
