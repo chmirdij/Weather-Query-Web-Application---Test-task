@@ -1,7 +1,8 @@
-import asyncio
 import requests
 import json
 import time
+
+from fastapi import HTTPException, status
 from sqlalchemy import insert, select, func, and_
 from datetime import datetime
 
@@ -28,7 +29,18 @@ class WeatherService:
 
         try:
             response = requests.get(settings.OW_URL, params=params, timeout=5)
-            response.raise_for_status()
+
+            if response.status_code == status.HTTP_404_NOT_FOUND:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="City not found")
+
+            if response.status_code == status.HTTP_401_UNAUTHORIZED:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid api token")
+
+            if response.status_code != status.HTTP_200_OK:
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Weather api error"
+                )
 
             duration = time.perf_counter() - start_time
             logger.info("API request", extra={"api_latency": round(duration * 1000, 2)})
@@ -38,9 +50,15 @@ class WeatherService:
 
             return row, parsed
 
+        except HTTPException:
+            raise
+
+        except requests.exceptions.Timeout:
+            raise HTTPException(status.HTTP_504_GATEWAY_TIMEOUT, detail="Weather API timeout")
+
         except Exception as e:
             logger.error("Api connection error", extra={"details": str(e)})
-            raise
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="Weather api unavailable")
 
 
 
