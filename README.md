@@ -13,5 +13,24 @@ and store/display the query history. The application uses PostgreSQL to store us
 - **SQLAlchemy**
 - **Alembic**
 - **Docker Compose**
-- **Requests**
+- **Requests (external API calls)**
 - **Redis (rate limiting and caching)**
+
+## Quickstart with Docker Compose
+1. Clone the repository
+2. Copy environment variables from the sample, fill your OW_API_KEY in **.env** and **.env.docker**
+3. Build and start all services (app, database, Redis):
+```bash
+docker compose build
+docker compose up -d
+```
+4. Access the application:
+- Swagger ui: http://localhost:8000/docs
+5. Testing:
+```bash
+docker compose exec app pytest
+```
+6. Stop the services when done:
+```bash
+docker compose down
+```

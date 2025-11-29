@@ -37,7 +37,7 @@ class Settings(BaseSettings):
         return f"postgresql+asyncpg://{self.TEST_DB_USER}:{self.TEST_DB_PASS}@{self.TEST_DB_HOST}:{self.TEST_DB_PORT}/{self.TEST_DB_NAME}"
 
     model_config = SettingsConfigDict(
-        env_file=".env.sample",
+        env_file=".env",
         env_file_encoding="utf-8",
     )
 
